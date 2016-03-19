@@ -130,8 +130,7 @@ void scan() {
         }
     }
 
-    std::cerr << "T = " << T << endl;
-
+    /*
     fprintf(stderr,"%d sattelites\n", nsat);
     forn(i, nsat) {
         fprintf(stderr,"speed: %d  cam: %d  range: %d  (max time to move: %d)\n",
@@ -152,6 +151,7 @@ void scan() {
         }
         fprintf(stderr,"Time avail: %d/%d (%.2lf%%)\n", totalLen, T, totalLen * 100. / T);
     }
+    */
 }
 
 vector<tuple<int, int, int, int>> result;
@@ -170,11 +170,14 @@ void dumpOutput() {
 void advanceSatellites() {
     ++curTime;
     forn(i, nsat) {
-        std::cerr << "speed: " << satSpeed[i] << std::endl;
-        auto was = satPosition[i];
         satPosition[i] = satPosition[i].atSlow(satSpeed[i], 1, camPosition[i]);
-        auto is = satPosition[i];
-        cerr << was << " - " << is << endl;
+    }
+}
+
+void removeCollection(int colId) {
+    --ncol;
+    for (int i = colId; i < ncol; ++i) {
+        cols[i] = cols[i + 1];
     }
 }
 
@@ -215,14 +218,19 @@ void solve() {
                 }
 
                 if (done) {
+                    if (cols[i].locs.empty()) {
+                        cerr << "done collection " << i << " @" << curTime << ", $" << cols[i].value << "\n";
+                        removeCollection(i);
+                    }
                     break;
                 }
             }
         }
 
         advanceSatellites();
-        std::cerr << "curTime = " << curTime << std::endl;
-        std::cerr << satPosition[0] << endl;
+        if (curTime % 1000 == 0) {
+            cerr << "timestamp: " << curTime << ", elapsed: " << clock()/1000 << " ms" << endl;
+        }
     }
 
     dumpOutput();
@@ -231,4 +239,6 @@ void solve() {
 int main() {
     scan();
     solve();
+
+    cerr << "Time: " << clock()/1000 << " ms" << endl;
 }
