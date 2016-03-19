@@ -29,22 +29,24 @@ int normx(int a) {
 struct pt {
     int x, y;
 
-    pt atSlow(int v, int t) {
+    pt atSlow(int &v, int t, pt &cam) {
         int x = this->x, y = this->y;
         forn (i, t) {
             if (miny <= y + v && y + v <= maxy) {
                 y += v;
                 x = normx(x - 15);
             }
-            else if (y + v > maxy) {
-                y = mody - (y + v);
+            else {
+                if (y + v > maxy) {
+                    y = mody - (y + v);
+                } else {
+                    y = -mody - (y + v);
+                }
                 x = normx(-modx / 2 + x - 15);
                 v = -v;
-            }
-            else if (y + v < miny) {
-                y = -mody - (y + v);
-                x = normx(-modx / 2 + x - 15);
-                v = -v;
+
+                cam.x = normx(-cam.x);
+                cam.y = -cam.y;
             }
         }
         return pt{x, y};
@@ -154,7 +156,7 @@ void scan() {
 
 vector<tuple<int, int, int, int>> result;
 void writeOperation(int satId, pt pt) {
-    result.eb(pt.y, pt.x, satId, curTime);
+    result.eb(pt.y, pt.x, curTime, satId);
 }
 
 void dumpOutput() {
@@ -170,7 +172,7 @@ void advanceSatellites() {
     forn(i, nsat) {
         std::cerr << "speed: " << satSpeed[i] << std::endl;
         auto was = satPosition[i];
-        satPosition[i] = satPosition[i].atSlow(satSpeed[i], 1);
+        satPosition[i] = satPosition[i].atSlow(satSpeed[i], 1, camPosition[i]);
         auto is = satPosition[i];
         cerr << was << " - " << is << endl;
     }
