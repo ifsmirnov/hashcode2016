@@ -61,6 +61,10 @@ struct pt {
     }
 };
 
+ostream& operator<<(ostream& out, const pt& p) {
+    return out << p.x << " " << p.y;
+}
+
 pt readPoint() {
     int x, y;
     scanf("%d%d", &x, &y);
@@ -126,7 +130,6 @@ void scan() {
 
     std::cerr << "T = " << T << endl;
 
-    /*
     fprintf(stderr,"%d sattelites\n", nsat);
     forn(i, nsat) {
         fprintf(stderr,"speed: %d  cam: %d  range: %d  (max time to move: %d)\n",
@@ -147,7 +150,6 @@ void scan() {
         }
         fprintf(stderr,"Time avail: %d/%d (%.2lf%%)\n", totalLen, T, totalLen * 100. / T);
     }
-    */
 }
 
 vector<tuple<int, int, int, int>> result;
@@ -166,7 +168,11 @@ void dumpOutput() {
 void advanceSatellites() {
     ++curTime;
     forn(i, nsat) {
+        std::cerr << "speed: " << satSpeed[i] << std::endl;
+        auto was = satPosition[i];
         satPosition[i] = satPosition[i].atSlow(satSpeed[i], 1);
+        auto is = satPosition[i];
+        cerr << was << " - " << is << endl;
     }
 }
 
@@ -213,7 +219,8 @@ void solve() {
         }
 
         advanceSatellites();
-//         std::cerr << "curTime = " << curTime << std::endl;
+        std::cerr << "curTime = " << curTime << std::endl;
+        std::cerr << satPosition[0] << endl;
     }
 
     dumpOutput();
