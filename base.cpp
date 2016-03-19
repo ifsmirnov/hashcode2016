@@ -124,6 +124,8 @@ void scan() {
         }
     }
 
+    std::cerr << "T = " << T << endl;
+
     /*
     fprintf(stderr,"%d sattelites\n", nsat);
     forn(i, nsat) {
@@ -177,8 +179,8 @@ bool canTakePhoto(int satId, pt pos) {
     if (abs(dist.x) > camRange[satId] || abs(dist.y) > camRange[satId]) {
         return false;
     }
-    // BUG HERE
-    int timeToMove = max(divideBy(dist.x, camSpeed[satId]), divideBy(dist.y, camSpeed[satId]));
+    pt relDist = dist - camPosition[satId];
+    int timeToMove = max(divideBy(relDist.x, camSpeed[satId]), divideBy(relDist.y, camSpeed[satId]));
     return lastMove[satId] + timeToMove <= curTime;
 }
 
@@ -194,8 +196,11 @@ void solve() {
                     if (canTakePhoto(satId, pos)) {
                         done = true;
                         writeOperation(satId, pos);
-                        // BUG HERE
                         cols[i].removeLoc(pos);
+
+                        lastMove[satId] = curTime;
+                        camPosition[satId] = pos - satPosition[satId];
+
                         done = true;
                         break;
                     }
@@ -208,7 +213,7 @@ void solve() {
         }
 
         advanceSatellites();
-        ++curTime;
+//         std::cerr << "curTime = " << curTime << std::endl;
     }
 
     dumpOutput();
