@@ -10,6 +10,7 @@ typedef pair<int, int> pii;
 #define pb push_back
 #define eb emplace_back
 #define sz(x) ((int)(x).size())
+#define all(x) (x).begin(), (x).end()
 
 const int minx = -648000;
 const int maxx = 647999;
@@ -57,6 +58,10 @@ struct pt {
 
     bool operator==(const pt& other) const {
         return x == other.x && y == other.y;
+    }
+
+    bool operator<(const pt& other) const {
+        return tie(x, y) < tie(other.x, other.y);
     }
 };
 
@@ -118,7 +123,10 @@ void scan() {
         int k, r;
         scanf("%d%d%d", &cols[i].value, &k, &r);
         forn(j, k) {
-            cols[i].locs.pb(readPoint());
+            auto p = readPoint();
+            if (!count(all(cols[i].locs), p)) {
+                cols[i].locs.pb(p);
+            }
         }
         forn(j, r) {
             int b, e;
@@ -151,6 +159,8 @@ void scan() {
     */
 }
 
+int score = 0;
+
 vector<tuple<int, int, int, int>> result;
 void writeOperation(int satId, pt pt) {
     result.eb(pt.y, pt.x, curTime, satId);
@@ -161,8 +171,88 @@ void dumpOutput() {
     for (auto xxxx: result) {
         printf("%d %d %d %d\n", get<0>(xxxx), get<1>(xxxx), get<2>(xxxx), get<3>(xxxx));
     }
+
+    cerr << "SCORE: " << score << endl;
 }
 
+set<int> availX;
+set<pii> availY[modx + 100]; // {y, compId}
+set<pii>& yset(int x) {
+    return availY[x + maxx + 50];
+}
+
+void buildSpatialIndex() {
+    forn(i, ncol) {
+        for (const auto& pt: cols[i].locs) {
+            availX.insert(pt.x);
+            yset(pt.x).emplace(pt.y, i);
+        }
+    }
+
+    cerr << "different x: " << availX.size() << endl;
+    int total = 0;
+    for (int x: availX) {
+        total += yset(x).size();
+    }
+    cerr << "total points: " << total << endl;
+}
+
+vector<pair<pt, int>> closePoints(pt origin, int dist) {
+    if (availX.empty()) return {};
+
+    auto smartNext = [](set<int>::iterator it) {
+        if (++it == availX.end()) {
+            return availX.begin();
+        }
+        return it;
+    };
+    auto smartPrev = [](set<int>::iterator it) {
+        if (it == availX.begin()) {
+            return --availX.end();
+        }
+        return --it;
+    };
+
+    vector<pair<pt, int>> res;
+    auto xit = availX.lower_bound(origin.x);
+    if (xit == availX.begin()) {
+        xit = --availX.end();
+    }
+    bool passedAll = false;
+
+    for (auto it = xit;; it = smartNext(it)) {
+        if (abs(*it - origin.x) > dist) {
+            break;
+        }
+
+        for (const auto& y_comp: yset(*it)) {
+            if (abs(y_comp.fi - origin.y) <= dist) {
+                res.emplace_back(pt{*it, y_comp.fi}, y_comp.se);
+            }
+        }
+
+//         if (it == xit) {
+//             passedAll = true;
+//             break;
+//         }
+    }
+
+    if (!passedAll) {
+        for (auto it = smartPrev(xit);; it = smartPrev(it)) {
+            if (abs(*it - origin.x) > dist) {
+                break;
+            }
+
+            for (const auto& y_comp: yset(*it)) {
+                if (abs(y_comp.fi - origin.y) <= dist) {
+                    res.emplace_back(pt{*it, y_comp.fi}, y_comp.se);
+                }
+            }
+        }
+    }
+
+    return res;
+}
 
 void advanceSatellites() {
     ++curTime;
@@ -195,6 +285,10 @@ bool canTakePhoto(int satId, pt pos) {
 void solve() {
     while (curTime <= T && ncol > 0) {
         forn(satId, nsat) {
+            auto closePt = closePoints(satPosition[satId], camRange[satId]);
+            if (closePt.empty()) {
+                continue;
+            }
             for (int i = ncol - 1; i >= 0; --i) {
                 if (!cols[i].available()) {
                     continue;
@@ -217,6 +311,7 @@ void solve() {
                 if (done) {
                     if (cols[i].locs.empty()) {
                         cerr << "done collection " << i << " @" << curTime << ", $" << cols[i].value << "\n";
+                        score += cols[i].value;
                         removeCollection(i);
                     }
                     break;
@@ -235,6 +330,7 @@ void solve() {
 
 int main() {
     scan();
+    buildSpatialIndex();
     solve();
 
     cerr << "Time: " << clock()/1000 << " ms" << endl;
