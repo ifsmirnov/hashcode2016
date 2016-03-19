@@ -55,31 +55,51 @@ struct pt {
         int dx = normx(x - p.x);
         return pt{dx, dy};
     }
+
+    bool operator==(const pt& other) const {
+        return x == other.x && y == other.y;
+    }
 };
 
 pt readPoint() {
     int x, y;
     scanf("%d%d", &x, &y);
-    return {x, y};
+    return {y, x};
 }
 
 
 int T;
+int curTime;
 
 int nsat;
 pt satPosition[maxn];
 int satSpeed[maxn], camSpeed[maxn], camRange[maxn];
+pt camPosition[maxn];
+int lastMove[maxn];
 
 struct Collection {
     int value;
     vector<pt> locs;
     vector<pii> times;
+
+    void removeLoc(const pt& loc) {
+        auto it = find(locs.begin(), locs.end(), loc);
+        assert(it != locs.end());
+        locs.erase(it);
+    }
+
+    bool available() const {
+        for (const pii& be: times) {
+            if (be.fi <= curTime && curTime <= be.se) {
+                return true;
+            }
+        }
+        return false;
+    }
 };
 
 int ncol;
 Collection cols[maxn];
-
-
 
 void scan() {
     scanf("%d", &T);
@@ -104,28 +124,97 @@ void scan() {
         }
     }
 
-    printf("%d sattelites\n", nsat);
+    /*
+    fprintf(stderr,"%d sattelites\n", nsat);
     forn(i, nsat) {
-        printf("speed: %d  cam: %d  range: %d  (max time to move: %d)\n",
+        fprintf(stderr,"speed: %d  cam: %d  range: %d  (max time to move: %d)\n",
             satSpeed[i], camSpeed[i], camRange[i], (camRange[i] + camSpeed[i] - 1) / camSpeed[i]);
     }
-    printf("\n");
+    fprintf(stderr,"\n");
 
-    printf("%d collections\n", ncol);
+    fprintf(stderr,"%d collections\n", ncol);
     sort(cols, cols + ncol, [](const Collection& lhs, const Collection& rhs) {
-        return lhs.value > rhs.value;
+        return lhs.value < rhs.value;
     });
     forn(i, ncol) {
-        printf("$%d, %d locations, %d time ranges\n",
+        fprintf(stderr,"$%d, %d locations, %d time ranges\n",
             cols[i].value, sz(cols[i].locs), sz(cols[i].times));
         int totalLen = 0;
         for (pii be: cols[i].times) {
             totalLen += be.se - be.fi + 1;
         }
-        printf("Time avail: %d/%d (%.2lf%%)\n", totalLen, T, totalLen * 100. / T);
+        fprintf(stderr,"Time avail: %d/%d (%.2lf%%)\n", totalLen, T, totalLen * 100. / T);
     }
+    */
+}
+
+vector<tuple<int, int, int, int>> result;
+void writeOperation(int satId, pt pt) {
+    result.eb(pt.y, pt.x, satId, curTime);
+}
+
+void dumpOutput() {
+    printf("%d\n", sz(result));
+    for (auto xxxx: result) {
+        printf("%d %d %d %d\n", get<0>(xxxx), get<1>(xxxx), get<2>(xxxx), get<3>(xxxx));
+    }
+}
+
+
+void advanceSatellites() {
+    ++curTime;
+    forn(i, nsat) {
+        satPosition[i] = satPosition[i].atSlow(satSpeed[i], 1);
+    }
+}
+
+inline int divideBy(int x, int y) {
+    return (abs(x) + y - 1) / y;
+}
+
+bool canTakePhoto(int satId, pt pos) {
+    pt dist = pos - satPosition[satId];
+    if (abs(dist.x) > camRange[satId] || abs(dist.y) > camRange[satId]) {
+        return false;
+    }
+    // BUG HERE
+    int timeToMove = max(divideBy(dist.x, camSpeed[satId]), divideBy(dist.y, camSpeed[satId]));
+    return lastMove[satId] + timeToMove <= curTime;
+}
+
+void solve() {
+    while (curTime <= T && ncol > 0) {
+        forn(satId, nsat) {
+            for (int i = ncol - 1; i >= 0; --i) {
+                if (!cols[i].available()) {
+                    continue;
+                }
+                bool done = false;
+                for (pt pos: cols[i].locs) {
+                    if (canTakePhoto(satId, pos)) {
+                        done = true;
+                        writeOperation(satId, pos);
+                        // BUG HERE
+                        cols[i].removeLoc(pos);
+                        done = true;
+                        break;
+                    }
+                }
+
+                if (done) {
+                    break;
+                }
+            }
+        }
+
+        advanceSatellites();
+        ++curTime;
+    }
+
+    dumpOutput();
 }
 
 int main() {
     scan();
+    solve();
 }
