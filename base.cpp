@@ -9,6 +9,7 @@ typedef pair<int, int> pii;
 #define fi first
 #define pb push_back
 #define eb emplace_back
+#define sz(x) ((int)(x).size())
 
 struct pt {
     int x, y;
@@ -67,10 +68,24 @@ void scan() {
 
     printf("%d sattelites\n", nsat);
     forn(i, nsat) {
-        printf("%d %d %d\n", satSpeed[i], camSpeed[i], camRange[i]);
+        printf("speed: %d  cam: %d  range: %d  (max time to move: %d)\n",
+            satSpeed[i], camSpeed[i], camRange[i], (camRange[i] + camSpeed[i] - 1) / camSpeed[i]);
     }
     printf("\n");
+
     printf("%d collections\n", ncol);
+    sort(cols, cols + ncol, [](const Collection& lhs, const Collection& rhs) {
+        return lhs.value > rhs.value;
+    });
+    forn(i, ncol) {
+        printf("$%d, %d locations, %d time ranges\n",
+            cols[i].value, sz(cols[i].locs), sz(cols[i].times));
+        int totalLen = 0;
+        for (pii be: cols[i].times) {
+            totalLen += be.se - be.fi + 1;
+        }
+        printf("Time avail: %d/%d (%.2lf%%)\n", totalLen, T, totalLen * 100. / T);
+    }
 }
 
 int main() {
