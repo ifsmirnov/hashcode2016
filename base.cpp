@@ -49,6 +49,12 @@ struct pt {
         }
         return pt{x, y};
     }
+
+    pt operator-(const pt &p) const {
+        int dy = y - p.y;
+        int dx = normx(x - p.x);
+        return pt{dx, dy};
+    }
 };
 
 pt readPoint() {
