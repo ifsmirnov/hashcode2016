@@ -122,18 +122,31 @@ void scan() {
     forn(i, ncol) {
         int k, r;
         scanf("%d%d%d", &cols[i].value, &k, &r);
+        int x = 1000000000, X = -1000000000;
+        int y = 1000000000, Y = -1000000000;
         forn(j, k) {
             auto p = readPoint();
             if (!count(all(cols[i].locs), p)) {
                 cols[i].locs.pb(p);
+                x = min(x, p.x);
+                X = max(X, p.x);
+                y = min(y, p.y);
+                Y = max(Y, p.y);
             }
         }
+        cerr << max(X-x, Y-y) << "\n";
         forn(j, r) {
             int b, e;
             scanf("%d%d", &b, &e);
             cols[i].times.eb(b, e);
         }
     }
+
+    sort(cols, cols + ncol, [](const Collection& lhs, const Collection& rhs) {
+        return lhs.locs.size() < rhs.locs.size();
+        return lhs.value > rhs.value;
+    });
+    ncol *= 0.35;
 
     /*
     fprintf(stderr,"%d sattelites\n", nsat);
@@ -180,6 +193,7 @@ set<pii> availY[modx + 100]; // {y, compId}
 set<pii>& yset(int x) {
     return availY[x + maxx + 50];
 }
+int totalPoints = 0;
 
 void buildSpatialIndex() {
     forn(i, ncol) {
@@ -195,6 +209,7 @@ void buildSpatialIndex() {
         total += yset(x).size();
     }
     cerr << "total points: " << total << endl;
+    totalPoints = total;
 }
 
 vector<pair<pt, int>> closePoints(pt origin, int dist) {
@@ -314,7 +329,6 @@ void solve() {
 
             if (candidates.empty())
                 continue;
-            //cerr << "Candidates: " << sz(candidates) << "\n";
 
             auto pp = *min_element(candidates.begin(), candidates.end(), cmp);
             int i = pp.second;
@@ -366,6 +380,14 @@ void solve() {
     }
 
     dumpOutput();
+    int doneCols = 0;
+    int leftPoints = 0;
+    forn(i, ncol) {
+        doneCols += (cols[i].locs.empty());
+        leftPoints += cols[i].locs.size();
+    }
+    cerr << "Components done: " << doneCols << " of " << ncol << endl;
+    cerr << "Points killed: " << totalPoints - leftPoints << " of " << totalPoints << endl;
 }
 
 int main() {
