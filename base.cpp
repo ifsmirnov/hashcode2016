@@ -282,6 +282,15 @@ bool canTakePhoto(int satId, pt pos) {
     return lastMove[satId] + timeToMove <= curTime;
 }
 
+double value(const pair<pt, int> &a) {
+    assert(!cols[a.second].locs.empty());
+    return cols[a.second].value;// / (double) sz(cols[a.second].locs);
+}
+
+bool cmp(const pair<pt, int> &a, const pair<pt, int> &b) {
+    return value(a) < value(b);
+}
+
 void solve() {
     while (curTime <= T && ncol > 0) {
         forn(satId, nsat) {
@@ -289,34 +298,65 @@ void solve() {
             if (closePt.empty()) {
                 continue;
             }
-            for (int i = ncol - 1; i >= 0; --i) {
-                if (!cols[i].available()) {
+
+            vector<pair<pt, int>> candidates;
+            for (auto pp: closePt) {
+                int i = pp.second;
+                pt pos = pp.first;
+                if (find(cols[i].locs.begin(), cols[i].locs.end(), pos) == cols[i].locs.end())
                     continue;
-                }
-                bool done = false;
-                for (pt pos: cols[i].locs) {
-                    if (canTakePhoto(satId, pos)) {
-                        done = true;
-                        writeOperation(satId, pos);
-                        cols[i].removeLoc(pos);
-
-                        lastMove[satId] = curTime;
-                        camPosition[satId] = pos - satPosition[satId];
-
-                        done = true;
-                        break;
-                    }
-                }
-
-                if (done) {
-                    if (cols[i].locs.empty()) {
-                        cerr << "done collection " << i << " @" << curTime << ", $" << cols[i].value << "\n";
-                        score += cols[i].value;
-                        removeCollection(i);
-                    }
-                    break;
-                }
+                if (!cols[i].available())
+                    continue;
+                if (!canTakePhoto(satId, pos))
+                    continue;
+                candidates.push_back(pp);
             }
+
+            if (candidates.empty())
+                continue;
+            //cerr << "Candidates: " << sz(candidates) << "\n";
+
+            auto pp = *min_element(candidates.begin(), candidates.end(), cmp);
+            int i = pp.second;
+            pt pos = pp.first;
+
+            writeOperation(satId, pos);
+            cols[i].removeLoc(pos);
+            lastMove[satId] = curTime;
+            camPosition[satId] = pos - satPosition[satId];
+            if (cols[i].locs.empty()) {
+                cerr << "done collection " << i << " @" << curTime << ", $" << cols[i].value << "\n";
+                score += cols[i].value;
+            }
+
+            //for (int i = ncol - 1; i >= 0; --i) {
+                //if (!cols[i].available()) {
+                    //continue;
+                //}
+                //bool done = false;
+                //for (pt pos: cols[i].locs) {
+                    //if (canTakePhoto(satId, pos)) {
+                        //done = true;
+                        //writeOperation(satId, pos);
+                        //cols[i].removeLoc(pos);
+
+                        //lastMove[satId] = curTime;
+                        //camPosition[satId] = pos - satPosition[satId];
+
+                        //done = true;
+                        //break;
+                    //}
+                //}
+
+                //if (done) {
+                    //if (cols[i].locs.empty()) {
+                        //cerr << "done collection " << i << " @" << curTime << ", $" << cols[i].value << "\n";
+                        //score += cols[i].value;
+                        //removeCollection(i);
+                    //}
+                    //break;
+                //}
+            //}
         }
 
         advanceSatellites();
