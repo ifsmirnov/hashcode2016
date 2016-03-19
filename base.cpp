@@ -10,17 +10,49 @@ typedef pair<int, int> pii;
 #define pb push_back
 #define eb emplace_back
 
+const int minx = -648000;
+const int maxx = 647999;
+const int modx = 648000 * 2; //360 deg
+const int miny = -324000;
+const int maxy = 324000;
+const int mody = 324000 * 2; //180 deg
+
+int normx(int a) {
+    while (a < minx)
+        a += modx;
+    while (a > maxx)
+        a -= modx;
+    return a;
+}
+
 struct pt {
     int x, y;
 
-    // operations: TODO
+    pt atSlow(int v, int t) {
+        int x = this->x, y = this->y;
+        forn (i, t) {
+            if (miny <= y + v && y + v <= maxy) {
+                y += v;
+                x = normx(x - 15);
+            }
+            else if (y + v > maxy) {
+                y = mody - (y + v);
+                x = normx(-modx / 2 + x - 15);
+                v = -v;
+            }
+            else if (y + v < miny) {
+                y = -mody - (y + v);
+                x = normx(-modx / 2 + x - 15);
+                v = -v;
+            }
+        }
+        return pt{x, y};
+    }
 };
 
 pt readPoint() {
     int x, y;
     scanf("%d%d", &x, &y);
-
-    // TODO: preprocess
     return {x, y};
 }
 
