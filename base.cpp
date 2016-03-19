@@ -29,7 +29,7 @@ int normx(int a) {
 struct pt {
     int x, y;
 
-    pt atSlow(int &v, int t, pt &cam) {
+    pt atSlow(int &v, int t) {
         int x = this->x, y = this->y;
         forn (i, t) {
             if (miny <= y + v && y + v <= maxy) {
@@ -44,9 +44,6 @@ struct pt {
                 }
                 x = normx(-modx / 2 + x - 15);
                 v = -v;
-
-                cam.x = normx(-cam.x);
-                cam.y = -cam.y;
             }
         }
         return pt{x, y};
@@ -170,7 +167,7 @@ void dumpOutput() {
 void advanceSatellites() {
     ++curTime;
     forn(i, nsat) {
-        satPosition[i] = satPosition[i].atSlow(satSpeed[i], 1, camPosition[i]);
+        satPosition[i] = satPosition[i].atSlow(satSpeed[i], 1);
     }
 }
 
